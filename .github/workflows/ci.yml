@@ -1,0 +1,26 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pytest
+      - run: pytest -q
+      - name: Quality report of the QA-Pipeline sample run
+        run: |
+          python -m qa_report_kit tests/fixtures/qa_pipeline_output.xml \
+            --requirements examples/requirements.csv \
+            --md report.md --html report.html --min-pass-rate 95
+          cat report.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: quality-report
+          path: report.html

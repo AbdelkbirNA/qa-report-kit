@@ -1,0 +1,6 @@
+requirement,test
+REQ-AUTH-01 Valid login opens the inventory,Login Valide*
+REQ-AUTH-02 Locked or unknown users are refused,Login Invalide*
+REQ-API-01 Product catalogue is served and valid,GET tous les produit*
+REQ-API-02 Categories endpoint is valid,Get Categories*
+REQ-PAY-01 Payment by voucher,*voucher*
