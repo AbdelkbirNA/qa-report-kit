@@ -1,0 +1,26 @@
+# Runs the quality gate as a Kubernetes Job: results come from a ConfigMap,
+# the Job fails when the gate fails (exit code 1), so a pipeline can wait on it.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: qa-report
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: qa-report
+          image: qa-report-kit:ci
+          imagePullPolicy: IfNotPresent
+          args: ["/results/output.xml", "--requirements", "/results/requirements.csv", "--min-pass-rate", "95"]
+          volumeMounts:
+            - name: results
+              mountPath: /results
+              readOnly: true
+          resources:
+            limits: { cpu: 500m, memory: 128Mi }
+      volumes:
+        - name: results
+          configMap:
+            name: qa-results

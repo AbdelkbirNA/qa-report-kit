@@ -24,3 +24,27 @@ jobs:
         with:
           name: quality-report
           path: report.html
+
+  kubernetes:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the image
+        run: docker build -t qa-report-kit:ci .
+      - uses: helm/kind-action@v1
+        with:
+          cluster_name: qa
+      - name: Load the image and the results into the cluster
+        run: |
+          kind load docker-image qa-report-kit:ci --name qa
+          kubectl create configmap qa-results \
+            --from-file=output.xml=tests/fixtures/qa_pipeline_output.xml \
+            --from-file=requirements.csv=examples/requirements.csv
+      - name: Run the quality gate as a Job
+        run: |
+          kubectl apply -f k8s/job.yaml
+          kubectl wait --for=condition=complete job/qa-report --timeout=120s
+      - name: Report
+        if: always()
+        run: kubectl logs job/qa-report | tee -a "$GITHUB_STEP_SUMMARY"
